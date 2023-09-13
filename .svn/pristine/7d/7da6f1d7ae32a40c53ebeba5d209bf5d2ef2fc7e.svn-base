@@ -1,0 +1,6 @@
+/dist/
+/config/
+/*.js/
+/request/
+/src/components/train-mgt
+/node_modules/np

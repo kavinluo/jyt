@@ -1,0 +1,434 @@
+<!--知识库_配置 列表-->
+<template>
+  <div id="content"  ref="content"  class="modal" >
+    <el-form :inline="true" ref="formValidate" class="el-form-item-search" onsubmit="return false">
+      <el-row>
+        <el-col :span="16">
+          <el-form-item>
+            <el-button type="primary" class="blueBtn"  @click="add" size="small">新建</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary"  :disabled="single" class="blueBtn" @click="edit" size="small">修改</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="danger" :disabled="multiple" @click="remove" size="small">删除</el-button>
+          </el-form-item>
+        </el-col>
+        <el-col :span="8" align="right">
+          <el-form-item>
+            <el-input v-model="formValidate.name" placeholder="请输入关键性文字"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" class="blueBtn" @click="handleSubmit('formValidate')">查询</el-button>
+            <el-button type="primary" class="blueBtn" @click="init">刷新</el-button>
+          </el-form-item>
+        </el-col>
+      </el-row>
+    </el-form>
+    <div   id="nosocomialTable" ref="nosocomialTable">
+    <el-table  slot-align="center" :height="dynamicHt" :context="self" :data="tableDataList" tooltip-effect="dark" style="width: 100%"  @selection-change="handleSelectionChange">
+      <el-table-column type="selection" width="55" />
+      <el-table-column label="序号" fixed prop="index" type="index" width="70">
+        <template slot-scope="scope">
+          {{ (myPages.currentPage - 1) * myPages.pageSize + scope.$index + 1 }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="name" label="名称" align="center" show-overflow-tooltip/>
+      <el-table-column prop="code" label="编码" align="center" show-overflow-tooltip/>
+      <el-table-column prop="center" label="内容" align="center" width="250" show-overflow-tooltip>
+        <template slot-scope="scope">
+          <el-button-group>
+          <el-button size="small" type="primary" @click="contentSetting(scope.$index,scope.row)">设置</el-button>
+          <el-button size="small" type="primary" @click="contentSettingShow(scope.$index,scope.row)">预览</el-button>
+          </el-button-group>
+        </template>
+      </el-table-column>
+      <el-table-column prop="level" label="分级" align="center" width="250" show-overflow-tooltip>
+        <template slot-scope="scope">
+          <el-button-group>
+            <el-button type="primary" size="small" @click="contentSettingLeaveShow(scope.$index,scope.row,scope.row.level)">{{scope.row.level}}</el-button>
+            <el-button type="primary" size="small" @click="contentSettingLeave(scope.$index,scope.row,scope.row.level)">设置</el-button>
+          </el-button-group>
+        </template>
+      </el-table-column>
+      <el-table-column prop="createTime" label="创建时间" align="center" width="190" show-overflow-tooltip/>
+    </el-table>
+    </div>
+    <div style="margin: 10px;">
+      <div style="float: right;">
+        <el-pagination
+          :current-page="myPages.currentPage"
+          :page-sizes="myPages.pageSizes"
+          :page-size="myPages.pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="listTotal"
+          @size-change="changePageSize"
+          @current-change="changePage"
+        />
+      </div>
+      <!--修改弹窗-->
+      <Modal :mask-closable="false" v-model="editmodal" name="editmodal" height="200"  title="修改"  class-name="vertical-center-modal" :loading="true"  :width="width">
+        <modal-header slot="header"  :content="editId" />
+        <edit :edit="handleEdit" ref="editModal0"  @refresh="refreshData" @cancelEdit="cancel" v-if="editData!=null" :editData="editData" :content="editId"/>
+        <div slot="footer" />
+      </Modal>
+      <!---->
+      <!--增加弹窗-->
+      <Modal :mask-closable="false" name="addmodal" v-model="addmodal" close-on-click-modal="false"  height="200"  title="增加" class-name="vertical-center-modal" :loading="loading" :width="width">
+        <modal-header slot="header"  :content="addId" />
+        <add  @cancelAdd="cancel" @refresh="refreshData"/>
+        <div slot="footer" />
+      </Modal>
+      <!---->
+
+      <!--查看弹窗-->
+      <Modal :mask-closable="false" v-model="showmodal"  height="200"  title="查看"  class-name="vertical-center-modal" :loading="true"  :width="width">
+        <show :show-data="showData"  @loading="showHidden"  @show="handleShow" :content="showId"/>
+        <div slot="footer" />
+      </Modal>
+      <!---->
+      <!--删除弹窗-->
+      <Modal :mask-closable="false" v-model="removemodal" close-on-click-modal="false" height="200" title="删除"  class-name="vertical-center-modal"  :loading="loading" :width="500">
+        <modal-header   slot="header"  :content="removeId"/>
+        <div class="remove">确定要删除吗？</div>
+        <el-row>
+          <el-col :span="10" :offset="14">
+            <el-button  class="but-col"  type="primary" @click="removeConfirm">确定</el-button>
+            <el-button  class="but-col"  type="danger"  @click="cancel">取消</el-button>
+          </el-col>
+        </el-row>
+        <div slot="footer" />
+      </Modal>
+      <!--内容设置对话框--->
+      <Modal :mask-closable="false" v-model="contentSettingmodal" close-on-click-modal="false"  height="200"  title="内容设置" class-name="vertical-center-modal" :loading="loading" :width="1000" style="max-height: 800px;">
+        <modal-header slot="header"  :content="contentSettingId" />
+        <contentSetting  @cancelAdd="cancel" ref="contentSettingmodal" :businessType="businessType" :businessId="businessId" @refresh="refreshData"/>
+        <div slot="footer" />
+      </Modal>
+      <!--内容设置预览对话框--->
+      <Modal :mask-closable="false"  v-model="contentSettingShowmodal" close-on-click-modal="false"  height="200"  title="内容设置预览" class-name="vertical-center-modal" :loading="loading"  :width="700" style="max-height: 800px;">
+        <modal-header slot="header"  :content="contentSettingShowId" />
+        <contentSettingShow  @cancelAdd="cancel"   ref="contentSettingShowmodal"/>
+        <div slot="footer" />
+      </Modal>
+      <!--内容分级设置对话框--->
+      <Modal :mask-closable="false" v-model="contentSettingLeavemodal" close-on-click-modal="false"  height="200"  title="内容分级设置" class-name="vertical-center-modal" :loading="loading" :width="1000" style="max-height: 800px;">
+        <modal-header slot="header"  :content="contentSettingLeaveId" />
+        <contentSettingLeave  @cancelAdd="cancel" ref="contentSettingLeavemodal" :businessType="businessType" :businessId="businessId" @refresh="refreshData"/>
+        <div slot="footer" />
+      </Modal>
+      <!--内容分级设置预览对话框--->
+      <Modal :mask-closable="false" v-model="contentSettingLeaveShowmodal" close-on-click-modal="false"  height="200"  title="内容分级设置预览" class-name="vertical-center-modal" :loading="loading"  :width="1000" style="max-height: 800px;">
+        <modal-header slot="header"  :content="contentSettingLeaveShowId" />
+        <contentSettingLeaveShow  @cancelAdd="cancel"   ref="contentSettingLeaveShowmodal"/>
+        <div slot="footer" />
+      </Modal>
+    </div>
+  </div>
+</template>
+<script >
+let Util = null
+/* eslint-disable */
+import add from './KnowledgeConfig_add.vue'
+import show from './KnowledgeConfig_view.vue'
+import edit from './KnowledgeConfig_edit.vue'
+import contentSetting from './contentSetting.vue'
+import contentSettingShow from './contentSettingShow.vue'
+import contentSettingLeave from './contentSettingLeave.vue'
+import contentSettingLeaveShow from './contentSettingLeaveShow.vue'
+
+import knowledgeApi from '../knowledgeApi.js'
+import _ from 'loadsh'
+export default{
+  components: {
+    show,
+    edit,
+    add,
+    contentSetting,
+    contentSettingShow,
+    contentSettingLeave,
+    contentSettingLeaveShow
+  },
+  data () {
+    return {
+      businessType: '',
+      businessId: null,
+      // 选中数组
+      ids: [],
+      // 非多个禁用
+      multiple: true,
+      // 非单个禁用
+      single: true,
+      knowledgeApi,
+      targer: '',
+      width: 650,
+      formValidate: {
+        name: '',
+        code: '',
+        level: '',
+        createTimeBegin: '',
+        createTimeEnd: '',
+        updateTimeBegin: '',
+        updateTimeEnd: '',
+        creator: '',
+        updater: '',
+        deleted: ''
+      },
+      options: [{
+        value: '0',
+        label: '待审核'
+      }, {
+        value: '1',
+        label: '审核通过'
+      }, {
+        value: '2',
+        label: '未审核'
+      }],
+      starTimes: '',
+      endTimes: '',
+      pickerOptions0: {
+        // 选择开始时间后设置结束日期的限制
+        disabledDate: (time)=> {
+          // eslint-disable-next-line eqeqeq
+          if(this.endTimes != '') {
+            return time.getTime() >= this.endTimes
+          }
+        }
+      },
+      pickerOptions1: {
+        // 选择结束时间后设置开始日期的限制
+        disabledDate: (time)=> {
+          // eslint-disable-next-line eqeqeq
+          if(this.starTimes != '') {
+            return time.getTime() <= this.starTimes
+          }
+        }
+      },
+      value1: '',
+      value2: '',
+      editData: {},
+      showData: '',
+      addmodal: false,
+      editmodal: false,
+      showmodal: false,
+      removemodal: false,
+      contentSettingmodal:false,
+      contentSettingShowmodal:false,
+      contentSettingLeaveShowmodal:false,
+      contentSettingLeavemodal:false,
+      addId: {
+        id: 'add',
+        title: '添加'
+      },
+      removeId: {
+        id: 'remove',
+        title: '删除'
+      },
+      showId: {
+        id: 'show',
+        title: '查看'
+      },
+      editId: {
+        id: 'edit',
+        title: '修改'
+      },
+      contentSettingId:{
+        id: 'contentSetting',
+        title: '内容设置'
+      },
+      contentSettingShowId:{
+        id: 'contentSettingShow',
+        title: '内容设置预览'
+      },
+      contentSettingLeaveId:{
+        id: 'contentSettingLeave',
+        title: '分级设置'
+      },
+      contentSettingLeaveShowId:{
+        id: 'contentSettingLeaveShow',
+        title: '分级设置预览'
+      },
+      multipleSelection: [],
+      dynamicHt: 300,
+      self: this,
+      tableDataList: [],
+      // 初始化加载页面信息
+      listMessTitle: {
+        ajaxSuccess: 'knowledgeConfigListPage',
+        ajaxParams: {
+          url: knowledgeApi.knowledgeConfigListPage.path,
+          method: knowledgeApi.knowledgeConfigListPage.method,
+          params: {}
+        }
+      },
+      loading: false
+    }
+  },
+  created () {
+    this.init()
+  },
+  mounted () {
+    // 页面dom稳定后调用
+    this.$nextTick(function () {
+      // 初始表格高度及分页位置
+      this.setTableDynHeight()
+      // 为窗体绑定改变大小事件
+      let Event = Util.events
+      Event.addHandler(window, 'resize', this.setTableDynHeight)
+    })
+  },
+  methods: {
+    init () {
+      this.listMessTitle.ajaxParams.params= {};
+      Util = this.$util
+      this.myPages = Util.pageInitPrams
+      this.queryQptions = {
+        params: {
+          pageNo: 1,
+          pageSize: Util.pageInitPrams.pageSize
+        }
+      }
+      this.setTableData()
+    },
+    // 时间
+    deformatterDate (d) {
+      return new Date(d).getTime() - 1000 * 60 * 60 * 24
+    },
+    handleStartTime (d) {
+      this.starTimes = this.deformatterDate(d)
+    },
+    handleEndTime (d) {
+      this.endTimes = this.deformatterDate(d)
+    },
+    // 刷新表单数据
+    refreshData(){
+      this.cancel(false);
+      let that=this;
+      setTimeout(function (){
+        that.setTableData();
+      },200);
+    },
+    setTableData () {
+      this.listMessTitle.ajaxParams.params = Object.assign(
+          this.listMessTitle.ajaxParams.params,
+          this.queryQptions.params,
+          this.formInline
+      )
+      this.ajax(this.listMessTitle);
+    },
+    // 表格数据列表
+    knowledgeConfigListPage (res) {
+      let data = res.data
+      let that = this
+      that.tableDataList = that.addIndex(data.list)
+      this.listTotal = data.total || 0
+    },
+    addIndex (data) {
+      let arr = []
+      for(let i = 0, length = data.length;i < length;i++) {
+        data[i].index = (this.queryQptions.params.curPage - 1) * this.queryQptions.params.pageSize + i + 1
+        arr.push(data[i])
+      }
+      return arr
+    },
+    handleSubmit(name){
+      this.listMessTitle.ajaxParams.params.name=this.formValidate.name;
+      this.setTableData ();
+    },
+
+    add (index) {
+      this.targer=this.addId.id;
+      this.addmodal = true
+    },
+    edit () {
+      const data=this.multipleSelection[0];
+      this.targer=this.editId.id;
+      this.editData =data;
+      this.editmodal = true;
+      this.$refs.editModal0.init(this.editData);
+    },
+    handleEdit (data) {
+      console.log(data)
+    },
+    show (index) {
+      this.showData = this.tableData1[index].id
+      this.showmodal = true
+    },
+    handleShow (data) {
+      this.showmodal = false
+    },
+
+    remove () {
+      this.targer=this.removeId.id;
+      this.operailityData = this.multipleSelection[0]
+      this.openModel('remove')
+      this.removemodal = true
+    },
+    contentSetting (index,row) {
+      this.targer=this.contentSettingId.id;
+      this.openModel('contentSetting');
+      this.contentSettingmodal=true;
+      this.$refs.contentSettingmodal.init(row.id,"KNOWLEDGE_CONFIG_CONTENT");
+    },
+    contentSettingShow (index,row) {
+      this.targer=this.contentSettingShowId.id;
+      this.$refs.contentSettingShowmodal.init(row.id,"KNOWLEDGE_CONFIG_CONTENT");
+      this.openModel('contentSettingShow');
+      this.contentSettingShowmodal=true;
+    },
+    contentSettingLeave(index,row,level){
+      this.targer=this.contentSettingLeaveId.id;
+      this.openModel('contentSettingLeave');
+      this.contentSettingLeavemodal=true;
+      this.$refs.contentSettingLeavemodal.init(row.id,"KNOWLEDGE_CONFIG_LEVEL",level);
+    },
+    contentSettingLeaveShow(index,row,level){
+      this.targer=this.contentSettingLeaveShowId.id;
+      this.$refs.contentSettingLeaveShowmodal.init(row.id,"KNOWLEDGE_CONFIG_LEVEL",level);
+      this.openModel('contentSettingLeaveShow');
+      this.contentSettingLeaveShowmodal=true;
+    },
+    //确认删除
+    removeConfirm () {
+      let ids = this.ids;
+      let opt = {
+        ajaxSuccess: 'deleteSuccess',
+        ajaxParams: {
+          url: this.knowledgeApi.deleteKnowledgeConfig.path+ids,
+          method: this.knowledgeApi.deleteKnowledgeConfig.method,
+          jsonString: true
+        }
+      }
+      this.ajax(opt);  //提交数据
+      this.removemodal = false
+    },
+    deleteSuccess(){
+      this.setTableData();
+    },
+    cancel (val) {
+      this[this.targer + 'modal'] = false
+    },
+    // 多选框选中数据
+    handleSelectionChange(selection) {
+      this.ids = selection.map(item => item.id);
+      this.multipleSelection =selection;
+      this.single = selection.length!=1
+      this.multiple = !selection.length
+    },
+    showHidden (status) {
+      this.loading = !!status
+    },
+    // 设置表格及分页的位置
+    setTableDynHeight (n) {
+      // 操作dom
+      let content = this.$refs.content
+      let parHt = content.parentNode.offsetHeight
+      let nosocomialTable = this.$refs.nosocomialTable
+      let paginationHt = 60
+      this.dynamicHt = parHt - nosocomialTable.offsetTop - paginationHt
+    }
+  }
+}
+</script>
+<style>
+</style>

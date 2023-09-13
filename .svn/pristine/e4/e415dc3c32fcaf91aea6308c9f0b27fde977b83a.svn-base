@@ -1,0 +1,467 @@
+<!--知识库_关键字 列表-->
+<template>
+  <div id="content"  ref="content"  class="modal"  v-loading="loading"    element-loading-text="正在为您拼命处理中"   element-loading-spinner="el-icon-loading"  element-loading-background="rgba(0, 0, 0, 0.8)">
+    <el-form :inline="true" class="el-form-item-search"  ref="formValidate" onsubmit="return false">
+      <el-row>
+        <el-col :span="16">
+          <el-form-item>
+            <el-button type="danger" :disabled="multiple" @click="remove" size="small">删除</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" class="blueBtn" :disabled="multiple" @click="keyWordLable" size="small">关键字标注</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary"  @click="keyWordLableAll" class="blueBtn"  size="small">一键整体标注</el-button>
+          </el-form-item>
+        </el-col>
+        <el-col :span="8" align="right">
+          <el-form-item>
+            <el-input v-model="formValidate.keywordName" placeholder="请输入关键性文字"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" class="blueBtn" @click="handleSubmit('formValidate')">查询</el-button>
+            <el-button type="primary" class="blueBtn" @click="init">刷新</el-button>
+            <el-button type="primary"  @click="querymodal = true"  class="blueBtn">高级搜索</el-button>
+          </el-form-item>
+        </el-col>
+      </el-row>
+    </el-form>
+    <div   id="nosocomialTable" ref="nosocomialTable">
+    <el-table  slot-align="center" :height="dynamicHt" :context="self" :data="tableDataList" tooltip-effect="dark" style="width: 100%"  @selection-change="handleSelectionChange">
+      <el-table-column
+          type="selection"
+          width="55">
+      </el-table-column>
+      <el-table-column label="序号" fixed prop="index" type="index" width="70">
+        <template slot-scope="scope">
+          {{ (myPages.currentPage - 1) * myPages.pageSize + scope.$index + 1 }}
+        </template>
+      </el-table-column>
+      <el-table-column
+          prop="keywordName"
+          label="关键字名称"
+          align="center"
+          show-overflow-tooltip>
+      </el-table-column>
+      <el-table-column
+          prop="attrName"
+          label="字段名称"
+          align="center"
+          show-overflow-tooltip>
+      </el-table-column>
+      <el-table-column
+          prop="attrInputType"
+          label="输入类型"
+          align="center"
+          show-overflow-tooltip>
+      </el-table-column>
+      <el-table-column
+          prop="configName"
+          label="知识分类"
+          align="center"
+          show-overflow-tooltip>
+      </el-table-column>
+      <el-table-column
+          prop="configCode"
+          label="知识编码"
+          align="center"
+          show-overflow-tooltip>
+      </el-table-column>
+      <el-table-column
+          prop="keywordExplain"
+          label="关键字释义"
+          align="center"
+          show-overflow-tooltip>
+      </el-table-column>
+      <el-table-column
+          prop="handleTime"
+          label="标注时间"
+          align="center"
+          show-overflow-tooltip>
+      </el-table-column>
+      <el-table-column
+          prop="handleNum"
+          label="标注数量"
+          align="center"
+          show-overflow-tooltip>
+      </el-table-column>
+    </el-table>
+    </div>
+    <div style="margin: 10px;">
+      <div style="float: right;">
+        <el-pagination
+            @size-change="changePageSize"
+            @current-change="changePage"
+            :current-page="myPages.currentPage"
+            :page-sizes="myPages.pageSizes"
+            :page-size="myPages.pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="myPages.listTotal">
+        </el-pagination>
+      </div>
+      <!--删除弹窗-->
+      <Modal
+          :mask-closable="false"
+          close-on-click-modal="false"
+          height="200"
+          v-model="removemodal"
+          title="对话框标题"
+          class-name="vertical-center-modal"
+          :loading="loading"
+          :width="500">
+        <!--<div slot="header"> -->
+        <!--</div>-->
+        <modal-header slot="header" :content="removeId"></modal-header>
+        <div class="remove">确定要删除吗？</div>
+        <el-row >
+          <el-col :span="10" :offset="14">
+            <el-button  class="but-col" @click="removeConfirm" type="primary">确定</el-button>
+            <el-button class="but-col"  @click="cancel('remove')" type="danger">取消</el-button>
+          </el-col>
+        </el-row >
+        <div slot="footer"></div>
+      </Modal>
+      <!---->
+       <!--查询窗口-->
+      <Modal
+          :mask-closable="false"
+          close-on-click-modal="false"
+          v-model="querymodal"
+          title="高级查询"
+          class-name="vertical-center-modal"
+          :loading="loading"
+          :width="650">
+        <!--<div slot="header"> -->
+        <!--</div>-->
+        <modal-header slot="header" :content="queryId"></modal-header>
+        <el-form :inline="true" :model="formInline" class="demo-form-inline" label-width="100px">
+          <el-form-item label="关键字">
+            <el-input v-model="formInline.keywordName"></el-input>
+          </el-form-item>
+          <el-form-item label="字段名称">
+            <el-input v-model="formInline.attrName"></el-input>
+          </el-form-item>
+          <el-form-item label="知识分类">
+            <el-input v-model="formInline.configName"></el-input>
+          </el-form-item>
+          <el-form-item label="编码">
+            <el-input v-model="formInline.configCode"></el-input>
+          </el-form-item>
+          <el-form-item label="关键字释义">
+            <el-input v-model="formInline.keywordExplain"></el-input>
+          </el-form-item>
+          <el-form-item label="输入类型">
+            <el-input v-model="formInline.attrInputType"></el-input>
+          </el-form-item>
+          <el-form-item label="标注时间">
+            <el-date-picker
+                v-model="value1"
+                type="daterange"
+                format="yyyy-MM-dd"
+                value-format="yyyy-MM-dd"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期">
+            </el-date-picker>
+          </el-form-item>
+        </el-form>
+        <el-row >
+          <el-col :span="10" :offset="14">
+              <el-button  class="but-col" @click="queryAll" type="primary">确定</el-button>
+            <el-button class="but-col" @click="formInlineRest" type="danger">重置</el-button>
+            <el-button  class="but-col" @click="querymodal = false"  type="primary">关闭</el-button>
+          </el-col>
+        </el-row >
+        <div slot="footer"></div>
+      </Modal>
+
+    </div>
+  </div>
+</template>
+<script >
+/* eslint-disable */
+import knowledgeApi from '../knowledgeApi'
+import {keyWords} from '../../../router/modules/knowledge'
+let Util = null
+export default{
+  computed: {
+    keyWords () {
+      return keyWords
+    }
+  },
+  data() {
+    return {
+      drawer:false,
+      cont:0,
+      knowledgeApi,
+      removemodal:false,
+      querymodal:false,
+      // 选中数组
+      ids: [],
+      // 非多个禁用
+      multiple: true,
+      // 非单个禁用
+      single: true,
+      formValidate: {keywordName:''},
+      options: [{
+        value: '0',
+        label: '待审核'
+      }, {
+        value: '1',
+        label: '审核通过'
+      }, {
+        value: '2',
+        label: '未审核'
+      }],
+      starTimes:'',
+      endTimes:'',
+      formInline:{
+        knowledgeContentId:'',
+        handleTimeBegin:'',
+        handleTimeEnd:'',
+        keywordName:'',
+        attrName:'',
+        attrInputType:'',
+        configName:'',
+        configCode:'',
+        keywordExplain:''
+      },
+      pickerOptions0: {
+        //选择开始时间后设置结束日期的限制
+        disabledDate:(time)=> {
+          if(this.endTimes!="") {
+            return time.getTime() >= this.endTimes;
+          }
+        }
+      },
+      pickerOptions1: {
+        //选择结束时间后设置开始日期的限制
+        disabledDate:(time)=> {
+          if(this.starTimes!="") {
+            return time.getTime() <= this.starTimes;
+          }
+        }
+      },
+      value1:[],
+      value2:'',
+      editData: '',
+      showData:'',
+      removeId:{
+        id:'remove',
+        title:'删除'
+      },
+      queryId:{
+        id:'query',
+        title:'高级查询'
+      },
+      multipleSelection: [],
+      dynamicHt: 300,
+      self: this,
+      loading:false,
+      tableDataList: [],
+      // 初始化加载页面信息
+      listMessTitle: {
+        ajaxSuccess: 'knowledgeConfigListPage',
+        ajaxParams: {
+          url: knowledgeApi.getKnowledgeKeywordList.path,
+          method: knowledgeApi.getKnowledgeKeywordList.method,
+          params: {}
+        }
+      },
+    }
+  },
+  mounted () {
+    // 页面dom稳定后调用
+    this.$nextTick(function () {
+      // 初始表格高度及分页位置
+      this.setTableDynHeight()
+      // 为窗体绑定改变大小事件
+      let Event = Util.events
+      Event.addHandler(window, 'resize', this.setTableDynHeight)
+    })
+  },
+  methods: {
+    keyWordLableAll(){
+      let opt = {
+        ajaxSuccess: 'submitSuccess',
+        ajaxParams: {
+          url: this.knowledgeApi.labelKeyKnowledgeKeyword.path+"ALL",
+          method: this.knowledgeApi.labelKeyKnowledgeKeyword.method,
+          jsonString: true
+        }
+      }
+      this.ajax(opt);  //保存数据
+      this.successMess("已经提交打标数据，系统后台将为您自动打标");
+      //this.loading=true;
+    },
+    keyWordLable(){
+      let opt = {
+        ajaxSuccess: 'submitSuccess',
+        ajaxParams: {
+          url: this.knowledgeApi.labelKeyKnowledgeKeyword.path+this.ids,
+          method: this.knowledgeApi.labelKeyKnowledgeKeyword.method,
+          jsonString: true
+        }
+      }
+      this.ajax(opt);  //保存数据
+      this.successMess("已经提交打标数据，系统后台将为您自动打标");
+     // this.loading=true;
+    },
+    submitSuccess(res){
+      this.loading=false;
+      this.successMess("操作成功");
+      this.setTableData();
+    },
+    init(){
+      this.listMessTitle.ajaxParams.params={};
+      this.formValidate={};
+      Util = this.$util
+      this.myPages = Util.pageInitPrams
+      this.queryQptions = {
+        params: {
+          pageNo: 1,
+          pageSize: Util.pageInitPrams.pageSize
+        }
+      }
+      this.setTableData()
+    },
+    //时间
+    deformatterDate(d){
+      return new Date(d).getTime()-1000*60*60*24;
+    },
+    handleStartTime(d){
+      this.starTimes = this.deformatterDate(d);
+    },
+    handleEndTime(d){
+      this.endTimes = this.deformatterDate(d);
+    },
+    setTableData () {
+      this.listMessTitle.ajaxParams.params = Object.assign(
+          this.listMessTitle.ajaxParams.params,
+          this.queryQptions.params,
+          this.formValidate
+      )
+      this.ajax(this.listMessTitle);
+    },
+    // 表格数据列表
+    knowledgeConfigListPage (res) {
+      let data = res.data
+      let that = this
+      that.tableDataList = that.addIndex(data.list)
+      this.listTotal = data.total || 0
+      this.myPages.listTotal=this.listTotal;
+    },
+    changePageSize (n){
+      this.queryQptions.params.pageSize = n;
+      this.setTableData();
+    },
+    addIndex(data){
+      let arr = []
+      for(let i=0,length=data.length;i<length;i++){
+        data[i].index = (this.queryQptions.params.curPage-1)*this.queryQptions.params.pageSize+i+1;
+        arr.push(data[i])
+      }
+      return arr
+    },
+    changePage (n) {
+      this.queryQptions.params.pageNo=n;
+      // 这里直接更改了模拟的数据，真实使用场景应该从服务端获取数据
+      this.queryQptions.params.curPage = n;
+      this.setTableData();
+
+
+    },
+    handleSubmit(name){
+      this.listMessTitle.ajaxParams.params.keywordName=this.formValidate.keywordName;
+      this.setTableData ();
+    },
+
+    handleEdit(data){
+      console.log(data)
+    },
+    show(index){
+      this.showData =this.tableData1[index].id
+      this.showmodal = true;
+    },
+    handleShow(data){
+      this.showmodal = false
+    },
+    //删除关键字
+    remove () {
+      if (!this.isSelected()) { return }
+      this.targer=this.removeId.id;
+      this.operailityData = this.multipleSelection[0]
+      this.openModel('remove')
+      this.removemodal = true
+    },
+    //确认删除
+    removeConfirm () {
+      let ids = this.ids;
+      let opt = {
+        ajaxSuccess: 'deleteSuccess',
+        ajaxParams: {
+          url: this.knowledgeApi.removeKnowledgeKeywordList.path+ids,
+          method: this.knowledgeApi.removeKnowledgeKeywordList.method,
+          jsonString: true
+        }
+      }
+      this.ajax(opt);  //保存数据
+      this.removemodal = false
+      this.refreshData();
+    },
+    //删除回调函数
+    deleteSuccess(){
+      this.setTableData();
+    },
+    //高级搜索
+    queryAll(){
+          if(this.value1!=null&&this.value1.length>0){
+            this.formInline.handleTimeBegin=this.value1[0] + " 00:00:00";
+            this.formInline.handleTimeEnd=this.value1[1] + " 23:59:59";
+          }else {
+            this.formInline.handleTimeBegin="";
+            this.formInline.handleTimeEnd="";
+          }
+          this.listMessTitle.ajaxParams.params = Object.assign(
+          this.listMessTitle.ajaxParams.params,
+          this.queryQptions.params,
+          this.formInline
+      )
+      this.ajax(this.listMessTitle);
+      this.querymodal=false;
+    },
+     //高级搜索重置
+    formInlineRest(){
+      this.formInline={};
+      this.value1= [];
+      this.formInline.handleTimeBegin="";
+      this.formInline.handleTimeEnd="";
+    },
+    cancel(targer){
+      this[targer+'modal'] = false;
+    },
+    // 多选框选中数据
+    handleSelectionChange(selection) {
+      this.ids = selection.map(item => item.id);
+      this.multipleSelection =selection;
+      this.single = selection.length!=1
+      this.multiple = !selection.length
+    },
+    showHidden(status){
+      this.loading = !!status
+    },
+    // 设置表格及分页的位置
+    setTableDynHeight (n) {
+      // 操作dom
+      let content = this.$refs.content
+      let parHt = content.parentNode.parentNode.offsetHeight
+      let nosocomialTable = this.$refs.nosocomialTable
+      let paginationHt = 60
+      this.dynamicHt = parHt - nosocomialTable.offsetTop - paginationHt
+    }
+  },
+  created(){
+    this.init();
+  },
+}
+</script>

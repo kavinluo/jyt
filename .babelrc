@@ -1,0 +1,28 @@
+{
+  "presets": [
+    ["@babel/preset-env",
+      {
+        "useBuiltIns": "usage",
+        "corejs": 3,
+        "targets": {
+          "chrome": "80",
+          "firefox": "50",
+          "ie": "9",
+          "safari": "10",
+          "edge": "17"
+        }
+      }
+    ]
+  ],
+  "plugins": ["transform-vue-jsx",
+    ["@babel/plugin-transform-runtime"],
+    "@babel/plugin-proposal-class-properties",
+    [
+      "component",
+      {
+        "libraryName": "element-ui",
+        "styleLibraryName": "theme-chalk"
+      }
+    ]
+  ]
+}

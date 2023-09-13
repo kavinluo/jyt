@@ -1,0 +1,729 @@
+<template>
+  <div>
+    <el-form ref="formValidate" :model="formValidate" :rules="rules">
+      <el-row>
+        <el-col :span="8">
+          <el-form-item label="考试名称" label-width="110px" prop="arrangeName">
+            <el-input v-model="formValidate.arrangeName" placeholder="请输入考试名称" style="width:200px;"/>
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="选择试卷" label-width="110px" prop="paperId">
+            <el-button class="blueBtn" @click="selectTtitle">选择</el-button>
+            <span>{{ selectTreeDatas }}</span>
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="试卷类型" label-width="110px" prop="paperType">
+            <el-select v-model="formValidate.paperType" placeholder="请选择试卷类型">
+              <el-option v-for="item in paperTypeList" :key="item.value" :label="item.label" :value="item.value"/>
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="8">
+          <el-form-item label="考生：" label-width="110px" prop="paperUserType">
+            <el-select v-model="formValidate.paperUserType" placeholder="请选择考生" @change="userChange">
+              <el-option v-for="(item) in paperAlljoinList" :key="item.sort" :label="item.remark" :value="item.value"/>
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="6">
+          <span v-if="formValidate.paperUserType !== 'ALL' && formValidate.paperUserType !== 'EXAM_ARRANGE' && formValidate.paperUserType !== 'PART_USER' && formValidate.paperUserType !== 'ACTIVITY'">————————</span>
+          <el-form-item v-if="formValidate.paperUserType === 'EXAM_ARRANGE'" prop="mechanism" label-width="110px">
+            <el-input v-model="selectArrange" style="width:200px;margin-left:-120px" placeholder="请选择排考" @focus="mechanism"/>
+          </el-form-item>
+          <el-form-item v-if="formValidate.paperUserType === 'PART_USER' && formValidate.paperUserType !== 'EXAM_ARRANGE'" prop="personnel" label-width="110px">
+            <el-input v-model="selectExams" style="width:200px;margin-left:-120px" placeholder="请选择考生" @focus="selectExam"/>
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="评卷人" prop="papers" label-width="110px">
+            <el-input v-model="selectUsers" placeholder="请选择评卷人" @focus="selectUser" />
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="8">
+          <el-form-item label="考试时长:" label-width="110px" prop="paperTimeType">
+            <el-select v-model="formValidate.paperTimeType" placeholder="请选择考试时长" @change="changeParperTime">
+              <el-option v-for="item in paperTimeList"  :key="item.value" :label="item.label" :value="item.value"/>
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <span v-if="formValidate.paperTimeType === 1 && formValidate.paperTime !== ''" style="font-size:17px">{{ formValidate.paperTime }}分钟</span>
+          <span v-if="formValidate.paperTimeType === 3">
+            <el-input v-model="formValidate.paperTime" type="number" oninput="value=value.replace(/[^\d]/g,'')"/></span>
+          <span v-if="formValidate.paperTimeType === 2 || formValidate.paperTime === ''">————————</span>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="5">
+          <el-form-item label="统一考试设置：" label-width="110px" prop="isZgks">
+            <el-select v-model="formValidate.isZgks" placeholder="请选择考试设置" style="width:202px;">
+              <el-option label="是" value="1"/>
+              <el-option label="否" value="0"/>
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col v-if="formValidate.isZgks === '1'" :span="5">
+          <el-form-item prop="zgksBeginTime" label-width="110px">
+            <el-date-picker id="intime" v-model="formValidate.zgksBeginTime" type="datetime" placeholder="开始日期时间" @change="timeChage"/>
+          </el-form-item>
+        </el-col>
+        <el-col v-if="formValidate.isZgks === '1'" :span="7">
+          <el-form-item prop="zgksEndTime" label-width="110px">
+            <el-date-picker v-model="formValidate.zgksEndTime" type="datetime" placeholder="结束日期时间"/>
+          </el-form-item>
+        </el-col>
+        <el-col v-if="formValidate.isZgks === '1'" :span="6">
+          <el-form-item prop="zgksLateTime">
+            <span>迟到</span>
+            <el-input v-model="formValidate.zgksLateTime" style="width:70px"/>
+            <span>分钟后不能进行考试</span>
+          </el-form-item>
+        </el-col>
+        <span v-else style="margin-left:147px">————————</span>
+      </el-row>
+      <el-row>
+        <el-col :span="5">
+          <el-form-item label="有效时间范围：" label-width="110px">
+            <el-date-picker v-model="formValidate.paperBegintime" type="datetime" placeholder="开始日期时间" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label-width="110px" prop="paperEndtime">
+            <el-date-picker v-model="formValidate.paperEndtime" type="datetime" placeholder="结束日期时间" />
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col>
+          <el-form-item label="考试次数：" label-width="110px">
+            <el-col :span="8">
+              <el-form-item label="最少考试次数" prop="paperMinnum" label-width="110px">
+                <el-input v-model="formValidate.paperMinnum" disabled />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="最多考试次数" prop="paperMaxnum" label-width="110px">
+                <el-input v-model="formValidate.paperMaxnum" />
+              </el-form-item>
+            </el-col>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="8">
+          <el-form-item label="试卷显示控制:" prop="paperViewType" label-width="110px">
+            <el-select v-model="formValidate.paperViewType" placeholder="请选择试卷显示" @change="viewTypeChange" >
+              <el-option v-for="item in paperViewList" :key="item.value" :label="item.label" :value="item.value"/>
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="作答顺序控制:" prop="enableModify" label-width="110px">
+            <el-select v-model="formValidate.enableModify" placeholder="请选择试卷显示">
+              <el-option v-for="item in enableModifyList" :key="item.value" :label="item.label" :value="item.value"/>
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="8">
+          <el-form-item label="成绩选项:" label-width="110px">
+            <el-select v-model="formValidate.paperViewmark" placeholder="请选择成绩选项">
+              <el-option v-for="item in scoreOptionsList" :key="item.value" :label="item.label" :value="item.value"/></el-select>
+          </el-form-item>
+        </el-col>
+        <el-col v-if="formValidate.scoreOptions === 2" :span="14">
+          <el-checkbox v-model="formValidate.paperShowhomepage" :true-label="1" :false-label="0" >允许考生提交后查看答卷和答案</el-checkbox>
+          <el-checkbox v-model="formValidate.paperShowmark" :true-label="1" :false-label="0">对所有人公开成绩 </el-checkbox>
+          <el-checkbox v-model="formValidate.paperThereport" :true-label="1" :false-label="0" >允许考生提交后查看评估报告 </el-checkbox>
+        </el-col>
+      </el-row>
+      <el-form-item label="防作弊：" label-width="110px">
+        <el-checkbox v-model="formValidate.paperIsorder" :true-label="1" :false-label="0">题型内试题顺序随机</el-checkbox>
+        <el-checkbox v-model="formValidate.paperIsrerow" :true-label="1" :false-label="0" > 选择题候选项随机</el-checkbox>
+        <el-checkbox v-model="formValidate.paperIspublic" :true-label="1" :false-label="0">使用屏幕控制</el-checkbox>
+        <el-checkbox v-model="formValidate.paperAllowRepeat" :true-label="0" :false-label="1" >不允许作答中途退出</el-checkbox>
+      </el-form-item>
+      <el-form-item label="授权码：" label-width="110px" v-if="formValidate.paperAllowRepeat === 0">
+        <el-checkbox v-model="formValidate.enableReExamCode" :true-label="1" :false-label="0">是否启用继续考试授权码</el-checkbox>
+      </el-form-item>
+      <el-row>
+        <el-col :span="8">
+          <el-form-item label="设备类型" label-width="110px">
+            <el-select v-model="formValidate.examClassify" placeholder="请选择设备类型">
+              <el-option label="APP" value="app"/>
+              <el-option label="PC" value="pc"/>
+              <el-option label="APP+PC" value="APP+PC"/>
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="是否需要签到:" prop="isSign" label-width="110px">
+            <el-select v-model="formValidate.isSign" placeholder="请选择是否签到">
+              <el-option label="是" value="1"/>
+              <el-option label="否" value="0"/>
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col v-if="formValidate.isSign === '1'" :span="8">
+          <el-form-item label="签到二维码:" prop="qrcodeRefreshTime" label-width="110px">
+            <el-select v-model="formValidate.qrcodeRefreshTime" placeholder="签到二维码刷新频率">
+              <el-option label="10秒" value="10" />
+              <el-option label="30秒" value="30"/>
+              <el-option label="1分钟" value="60"/>
+              <el-option label="2分钟" value="180"/>
+              <el-option label="不刷新" value="0"/>
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="9">
+          <el-form-item label="考试说明：" prop="paperMore" label-width="110px">
+            <el-input v-model="formValidate.paperMore" style="width:300px" placeholder="请输入考试说明"/>
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="创建人：" prop="creator" label-width="110px">
+            <span>{{ userInfo.username }}</span>
+          </el-form-item>
+          <el-form-item label="创建时间：" prop="createTime">
+            <span v-if="type == 'edit'">{{ getNowFormatDate(formValidate.createTime ) }}</span>
+            <span v-if="type != 'edit'">{{ getNowFormatDate() }}</span>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-form-item label-width="110px">
+        <el-button type="primary" @click="onSubmit">确定</el-button>
+      </el-form-item>
+    </el-form>
+    <!-- 选择试卷弹窗 -->
+    <Modal v-model="selectTreeModal" :mask-closable="false" height="200" title="对话框标题" class-name="vertical-center-modal" :width="1000">
+      <modal-header slot="header" :content="selectTreeId"/>
+      <parper v-if="selectTreeModal" :init-user="examation" @cancel="selectTreeModal = false" @setUsers="setExamination"/>
+      <div slot="footer" />
+    </Modal>
+    <!-- 选择评分人弹窗-->
+    <Modal v-model="userModal" :mask-closable="false" height="200" title="对话框标题" class-name="vertical-center-modal" :width="1000">
+      <modal-header slot="header" :content="userId"/>
+      <select-user v-if="userModal" :init-user="users"  url="passport/dept/tree" @cancel="userModal = false" @setUsers="setUsers"/>
+      <div slot="footer" />
+    </Modal>
+    <!-- 选择考生弹窗-->
+    <Modal v-model="examModal" :mask-closable="false" height="200"  title="对话框标题" class-name="vertical-center-modal" :width="1000">
+      <modal-header slot="header" :content="examId"/>
+      <select-user v-if="examModal" :init-user="exam" url="passport/dept/tree" @cancel="examModal = false" @setUsers="setExams"/>
+      <div slot="footer" />
+    </Modal>
+    <!-- 选择机构弹窗-->
+    <Modal v-model="mechanismModal" :mask-closable="false" height="200" title="对话框标题" class-name="vertical-center-modal" :width="1000">
+      <modal-header slot="header" :content="mechanisId"/>
+      <select-mechanism v-if="mechanismModal" :init-user="exam" @cancel="mechanismModal = false" @setUsers="setMechanism"/>
+      <div slot="footer" />
+    </Modal>
+  </div>
+</template>
+<script>
+let Util = null
+import api from './api'
+// import associationTreeNode from '../../tiku/jichutiku/associationTreeNode.vue'
+import parper from './examination_paper.vue'
+import selectMechanism from './examination_mechanism.vue'
+export default {
+  components: {
+    // associationTreeNode,
+    parper,
+    selectMechanism
+  },
+  props: {
+    operailityData: { type: Object, default: null },
+    type: { type: String, default: null },
+    currentTreeData: { type: Object, default: null },
+    setTableData: { type: Function, default: null }
+  },
+  data () {
+    var arrangeName = (rule, value, callback) => {
+      if(!value) {
+        return callback(new Error('考试名称不能为空'))
+      } else {
+        return callback()
+      }
+    }
+    var zgksLateTime = (rule, value, callback) => {
+      if(value > this.formValidate.paperTime && this.formValidate.paperTimeType !== 2) {
+        return callback(new Error('迟到时间不能大于考试时间'))
+      } else {
+        return callback()
+      }
+    }
+    var paperMaxnum = (rule, value, callback) => {
+      if(value < this.formValidate.paperMinnum) {
+        return callback(new Error('最少考试次数不能大于最多考试次数'))
+      } else {
+        return callback()
+      }
+    }
+    var paperEndtime = (rule, value, callback) => {
+      if(value < this.formValidate.paperBegintime) {
+        return callback(new Error('结束时间不能小于开始时间'))
+      } else {
+        return callback()
+      }
+    }
+    return {
+      formValidate: {
+        examinee: '',
+        userList: [], // 评卷人
+        zgksLateTime: '', // 迟到分钟
+        zgksBeginTime: '', // 开始时间
+        zgksEndTime: '', // 结束时间
+        paperMaxnum: '', // 最多考试次数
+        paperMinnum: '1', // 最少考试次数
+        paperViewType: 0, // 试题显示控制
+        paperViewmark: 1, // 成绩选项
+        mechanism: '', // 机构
+        // personnel: '', // 考试人员
+        paperAllowRepeat: 1, // 不允许作答中途退出（1是可以继续考试；0不可以继续考试） 默认不勾选 为1
+        examClassify: 'app', // 设备类型
+        creator: '', // 创建人
+        createTime: '', // 创建时间
+        paperThereport: 0, // 允许考生提交后查看评估报告
+        paperIsrerow: 0, // 选择题候选项随机
+        paperIsorder: 0, // 题型内试题顺序随机
+        paperEndtime: '', // 结束日期时间
+        paperBegintime: '', // 开始日期时间
+        paperShowmark: 0, // 对所有人公开成绩
+        paperShowhomepage: 0, // 允许考生提交后查看答卷和答案
+        paperIspublic: 0, // 使用屏幕控制
+        arrangeName: '', // 考试名称
+        paperTimeType: 1, // 考试时长
+        enableModify: 0, // 作答顺序控制
+        isSign: '1', // 是否需要签到
+        containsPath: '', // 选择的关联树节点数据  整理题库用
+        containsPathName: '',
+        paperType: 1,
+        paperUserType: 'ALL', // 考生
+        treeId: '', // 树节点id
+        paperId: '',
+        isZgks: '1',
+        paperMore: '', // 考试说明
+        paperTime: '',
+        paperSavename: '',
+        paperAlljoin: '',
+        enableReExamCode: 0, // 是否继续使用授权码
+        qrcodeRefreshTime: '10',
+        examArrangeId: ''
+      },
+      examActionList: [],
+      selectUsers: '',
+      selectExams: '',
+      selectArrange: '',
+      users: [],
+      exam: [],
+      userLists: [],
+      examList: [],
+      scoreList: [],
+      examation: [],
+      mechanismList: [],
+      mechan: [],
+      paperInfo: '',
+      paperTimeList: [
+        {
+          value: 1,
+          label: '使用试卷自有时长'
+        }, {
+          value: 2,
+          label: '不计时'
+        }, {
+          value: 3,
+          label: '重新定义时长'
+        }
+      ],
+      paperAlljoinList: [],
+      paperViewList: [
+        {
+          value: 0,
+          label: '在一个页面显示所有试题'
+        }, {
+          value: 1,
+          label: '在一个页面只显示一道题'
+        }, {
+          value: 2,
+          label: '在一个页面显示一题型'
+        }
+      ],
+      enableModifyList: [
+        {
+          value: 0,
+          label: '无限制'
+        }, {
+          value: 1,
+          label: '已作答题型不可返回查看'
+        }, {
+          value: 2,
+          label: '已作答试题不可返回查看'
+        }
+      ],
+      scoreOptionsList: [
+        {
+          value: 1,
+          label: '分数对考生保密'
+        }, {
+          value: 2,
+          label: '分数对考生公开'
+        }
+      ],
+      paperTypeList: [
+        {
+          value: 1,
+          label: '在线考试'
+        }, {
+          value: 3,
+          label: '活动考试'
+        }
+      ],
+      selectTreeModal: false,
+      selectTreeId: { id: 'selectTreeId', title: '选择试卷' },
+      treeInitKey: [],
+      selectTreeDatas: '',
+      userModal: false,
+      examModal: false,
+      mechanismModal: false,
+      userId: {id: 'userId', title: '选择评分人员'},
+      examId: { id: 'examId', title: '选择考生' },
+      mechanisId: {id: 'mechanisId', title: '选择排考信息'},
+      rules: {
+        paperType: [
+          { required: true, message: '请选择考试类型', trigger: 'change' }
+        ],
+        zgksLateTime: [
+          { required: true, message: '请填写迟到时间', trigger: 'blur' },
+          {validator: zgksLateTime}
+        ],
+        zgksBeginTime: [
+          { required: true, message: '请选择开始时间', trigger: 'blur' }
+        ],
+        zgksEndTime: [
+          { required: true, message: '请选择结束时间', trigger: 'blur' }
+        ],
+        arrangeName: [
+          {required: true, validator: arrangeName, trigger: 'change'}
+        ],
+        paperMaxnum: [
+          {validator: paperMaxnum, trigger: 'change'}
+        ],
+        paperEndtime: [
+          {validator: paperEndtime, trigger: 'change'}
+
+        ]
+      }
+    }
+  },
+  computed: {
+    userInfo () {
+      let info = this.$store.getters.getUserInfo || {}
+      return info
+    }
+  },
+  created () {
+    this.init()
+    if (this.formValidate.paperTimeType === 1 && this.type === 'add') {
+      this.formValidate.paperTime = this.examActionList[0].paperTime
+    }else if (this.formValidate.paperTimeType === 1 && this.type === 'edit') {
+      this.formValidate.paperTime = this.paperInfo.paperTime
+    }else if (this.formValidate.paperTimeType === 2) {
+      this.formValidate.paperTime = 0
+    }
+  },
+  methods: {
+    init () {
+      if (this.formValidate.enableModify === 0 && this.type !== 'edit') {
+        this.enableModifyList = this.enableModifyList.splice(0, 1)
+      }
+      if(!this.formValidate.paperMore) {
+        this.formValidate.paperMore = this.getNowFormatDate() + this.userInfo.username + '定义'
+      }
+      this.formValidate.treeId = this.currentTreeData.id
+      Util = this.$util
+      if (this.type === 'edit') {
+        let opt = {
+          ajaxSuccess: 'getSuccess',
+          ajaxParams: {
+            url: api.getList.path + this.operailityData.arrangeId,
+            method: 'get'
+          }
+        }
+        this.ajax(opt)
+      }
+      let opt = {
+        ajaxSuccess: (res) => {
+          this.paperAlljoinList = res.data
+        },
+        ajaxParams: {
+          url: '/passport/dict-data/queryList?dictType=paper_user_type',
+          method: 'get'
+        }
+      }
+      this.ajax(opt)
+    },
+    getSuccess (res) {
+      for (let k in this.formValidate) {
+        this.formValidate[k] = res.data[k]
+      }
+      this.paperInfo = res.data.paperInfo
+      if(res.data.isSign != null) {this.formValidate.isSign = String(res.data.isSign)}
+      if(res.data.isZgks != null) {this.formValidate.isZgks = String(res.data.isZgks)}
+      if(res.data.qrcodeRefreshTime != null) {this.formValidate.qrcodeRefreshTime = String(res.data.qrcodeRefreshTime)}
+      this.userLists = res.data.userList
+      this.selectTreeDatas = res.data.paperSavename
+      // 评分人
+      let userArr = []
+      this.users = []
+      this.userLists.forEach(item => {
+        if (item.userType === 2) {
+          this.scoreList.push(item)
+          userArr.push(item.userName)
+          this.users.push({
+            codeNumber: '无',
+            key: item.userId,
+            label: item.userName,
+            data: {
+              id: item.userId,
+              nickname: item.userName
+            }
+          })
+        }
+      })
+      this.selectUsers = userArr.join('，')
+      // 考生
+      let examArr = []
+      this.exam = []
+      res.data.userList.forEach(item => {
+        if (item.userType === 0 && res.data.paperUserType === 'PART_USER') {
+          this.examList.push(item)
+          examArr.push(item.userName)
+          this.exam.push({
+            key: item.userId,
+            label: item.userName,
+            data: {
+              id: item.userId,
+              nickname: item.userName
+            }
+          })
+        }
+      })
+      this.selectExams = examArr.join('，')
+      // 机构
+      this.selectArrange = res.data.examArrangeName
+
+    },
+    onSubmit () {
+      if (this.examList.length !== 0 || this.scoreList.length !== 0 || this.mechanismList.length !== 0 && this.type === 'edit') {
+        if (this.mechanismList.length !== 0) {
+          this.examList = []
+        }
+        this.formValidate.userList = []
+        this.formValidate.userList.push(...this.examList, ...this.scoreList, ...this.mechanismList)
+      }else {
+        this.formValidate.userList.push(...this.examList, ...this.scoreList, ...this.mechanismList)
+      }
+      if (this.formValidate.paperUserType === 'ALL') {
+        this.formValidate.paperAlljoin = 1
+      }
+      if (this.formValidate.zgksBeginTime !== '' && this.formValidate.paperBegintime !== '') {
+        if (this.formValidate.paperBegintime > this.formValidate.zgksBeginTime && this.formValidate.isZgks === '1') {
+          this.$message({
+            message: '有效范围不在统一考试范围',
+            type: 'warning'
+          })
+          return false
+        }
+      }
+      this.$refs.formValidate.validate((valid) => {
+        if (valid) {
+          let opt = {
+            ajaxSuccess: 'submitSuccess',
+            ajaxParams: {
+              url: this.type === 'edit' ? api.modifyExamList.path + this.operailityData.arrangeId : api.addList.path,
+              method: this.type === 'edit' ? 'put' : 'post',
+              jsonString: true,
+              data: this.getFormData(this.formValidate)
+            }
+          }
+          this.ajax(opt)
+        } else {
+          return false
+        }
+      })
+    },
+    submitSuccess (res) {
+      if (res.code === 0) {
+        this.$message({
+          message: this.type === 'add' ? '添加成功' : '修改成功',
+          type: 'success'
+        })
+        this.$emit('cancel', 'add')
+        this.setTableData()
+      }
+    },
+    // 选择试卷
+    selectTtitle () {
+      this.selectTreeModal = true
+    },
+    // 选择试卷
+    setExamination (examAction) {
+      this.examActionList = examAction
+      this.formValidate.paperId = examAction[0].id
+      this.formValidate.paperSavename = examAction[0].name
+      this.formValidate.paperTime = this.examActionList[0].paperTime
+      this.selectTreeDatas = examAction[0].name
+      this.selectTreeModal = false
+    },
+    // 选择排考
+    mechanism () {
+      this.mechanismModal = true
+    },
+    changeParperTime (val) {
+      if (val === 1 && this.type === 'add') {
+        console.log(this.formValidate.paperTime, 'this.formValidate.paperTimeadd')
+        this.formValidate.paperTime = this.examActionList[0].paperTime
+      }else if (val === 1 && this.type === 'edit') {
+        this.formValidate.paperTime = this.paperInfo.paperTime
+        console.log(this.formValidate.paperTime, 'this.formValidate.paperTimeedit')
+      }else if (val === 2) {
+        this.formValidate.paperTime = 0
+      }
+    },
+    // 选择管理员
+    selectUser () {
+      this.userModal = true
+    },
+    // 选择考生
+    selectExam () {
+      this.examModal = true
+    },
+    // 考生
+    setExams (examData) {
+      this.examList = []
+      let examArr = []
+      examData.forEach(item => {
+        examArr.push(item.label)
+        this.examList.push({
+          userName: item.label,
+          userId: item.key,
+          userType: 0
+        })
+      })
+      this.selectExams = examArr.join('，')
+      this.examModal = false
+    },
+    // 评分人员
+    setUsers (userData) {
+      this.scoreList = []
+      let userArr = []
+      userData.forEach(item => {
+        userArr.push(item.label)
+        this.scoreList.push({
+          userName: item.label,
+          userId: item.key,
+          userType: 2
+        })
+      })
+      this.selectUsers = userArr.join('，')
+      this.userModal = false
+    },
+    // 排考
+    setMechanism (mechanismData) {
+      this.formValidate.examArrangeId = mechanismData[0].id
+      this.mechanismList = []
+      let mechanismArr = []
+      mechanismData.forEach(item => {
+        mechanismArr.push(item.arrangeName)
+        if (item.placeUserList !== null) {
+          item.placeUserList.forEach(i => {
+            this.mechanismList.push({
+              userName: i.userName,
+              userId: i.userId,
+              userType: 0
+            })
+          })
+          this.selectArrange = mechanismArr.join(',')
+          this.mechanismModal = false
+        }else {
+          this.$message({
+            message: '该排考下无考生',
+            type: 'warning'
+          })
+        }
+      })
+    },
+    getFormData (data) {
+      let myData = Util._.defaultsDeep({}, data)
+      return myData
+    },
+    // 当前时间
+    getNowFormatDate () {
+      let date = new Date()
+      let seperator1 = '-'
+      let year = date.getFullYear()
+      let month = date.getMonth() + 1
+      let strDate = date.getDate()
+      if (month >= 1 && month <= 9) {
+        month = '0' + month
+      }
+      if (strDate >= 0 && strDate <= 9) {
+        strDate = '0' + strDate
+      }
+      let hh = date.getHours() // 时
+      let mm = date.getMinutes()
+      let currentdate = year + seperator1 + month + seperator1 + strDate + '   '
+      if (hh < 10) {
+        currentdate += '0'
+      }
+
+      currentdate += hh + ':'
+      if (mm < 10) { currentdate += '0' }
+      currentdate += mm
+      return currentdate
+    },
+    // 试题显示控制
+    viewTypeChange (val) {
+      let enbleList = [{value: 0, label: '无限制'}, {value: 1, label: '已作答题型不可返回查看'}, {value: 2, label: '已作答试题不可返回查看'}]
+      if (val === 0) {
+        this.formValidate.enableModify = 0
+        this.enableModifyList = enbleList.splice(0, 1)
+      }else if (val === 1) {
+        this.formValidate.enableModify = 2
+        this.enableModifyList = enbleList
+      }else{
+        this.formValidate.enableModify = 1
+        this.enableModifyList = enbleList.splice(0, 2)
+      }
+    },
+    // 考生切换
+    userChange (val) {
+      if (val === 'PART_USER') {
+        this.selectExams = ''
+        this.examList = []
+      }else if (val === 'EXAM_ARRANGE') {
+        this.selectArrange = ''
+        this.mechanismList = []
+      }
+    },
+    // 时间
+    timeChage (val) {
+      if (this.formValidate.paperTimeType === 1 || this.formValidate.paperTimeType === 3) {
+        this.formValidate.zgksEndTime = new Date(val.getTime() + this.formValidate.paperTime * 60000)
+      }
+    }
+  }
+}
+</script>
+<style scoped>
+</style>

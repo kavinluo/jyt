@@ -1,0 +1,4 @@
+下载默认安装后,接着安装以下依赖。
+1.npm install quill --force
+2.npm install custom-protocol-
+check --force3.npm install nprogress --force

@@ -1,0 +1,312 @@
+<!----------------------------------
+****--@name     微信审核用页面
+****--@role     ${*}
+****--@date     6
+****--@author   y
+----------------------------------->
+<template>
+  <div class="login">
+    <div class="loginTitle">金医途</div>
+<!--    <div class="inputImg">
+      <div
+        v-if="num === 1"
+        class="form"
+      >
+        <p class="topchild">
+          金医途-后台管理
+        </p>
+        <el-divider />
+        <el-form
+          ref="form"
+          class="demo-ruleForm"
+          :model="form"
+          status-icon
+          :rules="loginRules"
+          label-width="100px"
+        >
+          <el-form-item prop="username">
+            <el-input
+              v-model="form.username"
+              type="username"
+              prefix-icon="el-icon-user"
+              placeholder="用户名"
+              autocomplete="off"
+              style="width:320px;"
+            />
+          </el-form-item>
+          <el-form-item prop="password">
+            <el-input
+              v-model="form.password"
+              type="password"
+              prefix-icon="el-icon-lock"
+              placeholder="密码"
+              autocomplete="off"
+              style="width:320px;"
+              :show-password="true"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button
+              type="primary"
+              style="width:320px;"
+              @click="login('form',form)"
+            >
+              登录
+            </el-button>
+          </el-form-item>
+          <el-link
+            target="_blank"
+            :underline="false"
+            @click="forgetPassword"
+          >
+            忘记密码
+          </el-link>
+        </el-form>
+      </div>
+      <div
+        v-if="num === 2"
+        class="formPassword"
+      >
+        <p class="topchild">
+          忘记密码
+        </p>
+        <el-divider />
+        <el-form
+          ref="form"
+          :model="phoneForm"
+          status-icon
+          :rules="loginRules"
+          label-width="100px"
+          class="demo-ruleForm"
+        >
+          <el-form-item prop="mobile">
+            <el-input
+              v-model="phoneForm.mobile"
+              type="number"
+              placeholder="手机号:"
+              autocomplete="off"
+              style="width:320px;"
+            />
+          </el-form-item>
+          <el-form-item prop="scene">
+            <el-input
+              v-model="phoneForm.scene"
+              disabled
+              type="number"
+              placeholder="短信场景:"
+              autocomplete="off"
+              style="width:320px;"
+            />
+          </el-form-item>
+          <el-form-item prop="code">
+            <el-input
+              v-model="phoneForm.code"
+              type="number"
+              placeholder="验证码:"
+              autocomplete="off"
+              style="width:203px;"
+            />
+            <el-button
+              type="primary"
+              @click="verificationCode"
+            >
+              发送验证码
+            </el-button>
+          </el-form-item>
+          <el-form-item prop="password">
+            <el-input
+              v-model="phoneForm.password"
+              type="number"
+              placeholder="新密码:"
+              autocomplete="off"
+              style="width:320px;"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button
+              type="primary"
+              style="width:320px;"
+              @click="onSubMitForm"
+            >
+              确定
+            </el-button>
+          </el-form-item>
+          <el-link
+            target="_blank"
+            :underline="false"
+            style="margin-left:-57%"
+            @click="returnLogin"
+          >
+            &lt;返回登录页面
+          </el-link>
+        </el-form>
+      </div>
+    </div>-->
+    <div class="loginBg">
+      <div>版权所有：华夏国医（北京）信息技术有限公司</div>
+      <div>版本信息：V1.0.0</div>
+    </div>
+  </div>
+</template>
+<script>
+import {
+  loginRules
+} from '../baseRules/rules'
+import api from './api'
+export default {
+  name: 'Login',
+  data () {
+    return {
+      loginRules,
+      api,
+      num: 1,
+      form: {
+        username: 'admin',
+        password: '666666' // testymh
+        // phone: '',
+        // verification: '',
+        // newPassword: '',
+        // newPasswords: ''
+      },
+      formInline: {
+        mobile: '',
+        scene: ''
+      },
+      phoneForm: {
+        mobile: '',
+        code: '',
+        scene: '2',
+        password: ''
+      }
+    }
+  },
+  methods: {
+    // 初始化请求列表数据
+    init () {
+    },
+    login (formName) {
+      this.$store.dispatch('storeLogin', this)
+    },
+    onSubMitForm () {
+      let opt = {
+        ajaxSuccess: 'onSubmitSuccess',
+        ajaxParams: {
+          url: api.resetPassword.path,
+          method: 'post',
+          jsonString: true,
+          data: this.phoneForm
+        }
+      }
+      this.ajax(opt)
+    },
+    verificationCode () {
+      let opt = {
+        ajaxSuccess: 'submitSuccess',
+        ajaxParams: {
+          url: api.authPhone.path,
+          method: 'post',
+          jsonString: true,
+          data: this.phoneForm
+        }
+      }
+      this.ajax(opt)
+    },
+    submitSuccess (res) {
+      if (res.code === 0) {
+        this.$message({ message: '发送成功', type: 'success'})
+      }
+    },
+    onSubmitSuccess (res) {
+      if (res.code === 0) {
+        this.$message({ message: '修改成功', type: 'success'})
+        this.num = 1
+      }
+    },
+    forgetPassword () {
+      this.$refs.form.clearValidate()
+      this.num = 2
+    },
+    returnLogin () {
+      this.num = 1
+      this.$refs.form.clearValidate()
+
+    }
+  }
+}
+</script>
+
+<style scoped>
+.login {
+  background-image: url("../../assets/images/login.png");
+  /* background-size: 100% 100%; */
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+.loginTitle {
+  position: absolute;
+  left: 4%;
+  top: 6%;
+  font-size: 50px;
+  color: #fff;
+  font-weight: 700;
+  font-family: "楷体";
+}
+.inputImg {
+  background-image: url("../../assets/images/u4.png");
+  width: 655px;
+  height: 610px;
+  position: absolute;
+  right: 4%;
+  top: 6%;
+}
+.form {
+  width: 400px;
+  height: 400px;
+  border-radius: 20px;
+  background-color: aliceblue;
+  position: absolute;
+  right: 13%;
+  top: 21%;
+}
+.formPassword {
+  width: 450px;
+  height: 450px;
+  border-radius: 20px;
+  background-color: aliceblue;
+  position: absolute;
+  right: 10%;
+  top: 17%;
+}
+.topchild {
+  margin-top: 35px;
+  text-align: center;
+  font-size: 30px;
+  color: #409eff;
+}
+.demo-ruleForm {
+  text-align: center;
+}
+.demo-ruleForm >>> .el-form-item__content {
+  margin-left: 0px !important;
+}
+.demo-ruleForm >>> .el-form-item__error {
+  position: absolute;
+  top: 100%;
+  left: 10%;
+}
+.loginBg {
+  color:#3379CC;
+  text-align: center;
+  position: absolute;
+  left: 40%;
+  bottom: 6%;
+}
+.el-divider--horizontal {
+    display: block;
+    height: 2px;
+    width: 80%;
+    margin: 20px auto;
+    background-color: #9ad8ff;
+}
+</style>

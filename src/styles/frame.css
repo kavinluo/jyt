@@ -1,0 +1,286 @@
+@charset "utf-8";
+/* CSS Document */
+.viewFramework-topbar{
+	background: #09c none repeat scroll 0 0;
+    height: 50px;
+    position: fixed;
+    top:0;
+    width: 100%;
+    z-index: 160;
+}
+.viewFramework-topbar-zindex{
+  z-index: 180;
+}
+
+.ambuf-console-topbar {
+    background: #00a4db none repeat scroll 0 0;
+    clear: both;
+    font-size: 12px;
+    height: 50px;
+    min-width: 990px;
+    position: relative;
+    z-index: 100;
+}
+
+.viewFramework-body {
+    bottom: 0;
+    position: absolute;
+    top: 50px;
+    width: 100%;
+    z-index: 150;
+}
+
+
+
+.viewFramework-sidebar-full .viewFramework-sidebar, .viewFramework-sidebar.sidebar-full {
+    display: block;
+    width: 160px;
+}
+.viewFramework-sidebar-mini .viewFramework-sidebar, .viewFramework-sidebar.sidebar-mini {
+    display: block;
+    width: 50px;
+}
+.viewFramework-sidebar-mini .viewFramework-sidebar .sidebar-content, .viewFramework-sidebar.sidebar-mini .sidebar-content {
+    width: 70px;
+}
+.viewFramework-sidebar-mini .viewFramework-sidebar .sidebar-fold, .viewFramework-sidebar.sidebar-mini .sidebar-fold {
+    width: 50px;
+}
+.viewFramework-sidebar {
+    bottom: 0;
+    display: none;
+    overflow-x: hidden;
+    position: fixed;
+    top: 50px;
+    width: 0;
+    z-index: 100;
+}
+.viewFramework-sidebar .sidebar-content {
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    /*width: 200px;*/
+    /*width: 180px;*/
+  width: 170px;
+}
+.sidebar-inner{}
+.viewFramework-sidebar .sidebar-fold {
+    -moz-user-select: none;
+    background: #3f4e5f none repeat scroll 0 0;
+    color: #aeb9c2;
+    cursor: pointer;
+    font-size: 12px;
+    height: 30px;
+    line-height: 30px !important;
+    text-align: center;
+    width: 180px;
+}
+
+
+
+.viewFramework-sidebar-full .viewFramework-main
+,.viewFramework-main-navbar-full .viewFramework-main-content {
+    left: 180px;
+}
+.viewFramework-sidebar-mini .viewFramework-main {
+    left: 50px;
+}
+.viewFramework-main-navbar-mini .viewFramework-main-content {
+    left: 0;
+}
+.viewFramework-main-body {
+    background-color: #000;
+    bottom: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+}
+.viewFramework-main,.viewFramework-main-content {
+    background: #dce9f4 none repeat scroll 0 0;
+    bottom: 0;
+    left: 0;
+    overflow: hidden;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: auto;
+}
+.viewFramework-inner{
+	background: #dce9f4 none repeat scroll 0 0;
+    width: auto;
+    padding-bottom: 1px;
+    zoom:1;
+}
+.viewFramework-main .viewFramework-main-iframe,
+.viewFramework-main-content .viewFramework-main-iframe{
+	position:absolute;width:100%;height:100%;overflow:auto;frameborder:no;
+}
+
+
+/*
+ * 二级菜单
+ */
+.viewFramework-main-navbar-full .viewFramework-main-navbar {
+    width: 180px;
+}
+
+.viewFramework-main-navbar {
+    background-color: #eaedf1;
+    bottom: 0;
+    float: left;
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    transition: all 0.2s ease 0s;
+    width: 0;
+    z-index: 2;
+}
+
+.viewFramework-main-navbar-full .viewFramework-main-navbar-collapse {
+    left: 167px;
+}
+.viewFramework-main-navbar-collapse {
+    height: 50px;
+    left: 0;
+    position: absolute;
+    top: 50%;
+    transition: all 0.2s ease 0s;
+    width: 13px;
+    z-index: 3;
+    cursor: pointer;
+}
+
+.viewFramework-main-navbar .main-nav-stage {
+    bottom: 0;
+    overflow: hidden;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 180px;
+}
+
+/*
+ * 三级左右结构
+ */
+.viewFramework-main-navbar-full .viewFramework-main-last-navbar {
+    background: #f5f8fa;
+}
+.viewFramework-sidebar-mini .IndexLeftMargin {
+    left: 70px!important;
+}
+.viewFramework-sidebar-full .IndexLeftMargin {
+    left: 160px!important;
+}
+.viewFramework-sidebar-mini .IndexLeftMarginZero {
+    left: 0!important;
+}
+.viewFramework-sidebar-full .IndexLeftMarginZero {
+    left: 0!important;
+}
+.layout-content{
+    min-height: 200px;
+    /*overflow: hidden;*/
+    background: #fff;
+    border-radius: 4px;
+    position: absolute;
+    top: 40px;
+    right: 0;
+    bottom: 0;
+    left: 5px;
+    margin: 25px 8px 8px 8px;
+    padding: 12px;
+}
+.layout-header{
+  /*overflow: hidden;*/
+  background: #fff;
+  border-radius: 4px;
+  /* position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 5px; */
+  margin: 13px;
+  padding: 12px;
+  text-align: center;
+  color:rgb(52, 122, 204);
+  font-size:18px;
+  font-weight: 600;
+}
+/*工作台页面特有样式*/
+.layout-contentdce {
+  background-color: #dce9f4!important;
+  padding: 0!important;
+}
+@media screen and (min-width: 1600px) {
+    .viewFramework-sidebar-full .viewFramework-sidebar, .viewFramework-sidebar.sidebar-full {
+        display: block;
+        width: 165px;
+    }
+    /*.viewFramework-sidebar .sidebar-fold {
+        width: 180px;
+    }
+    .viewFramework-sidebar .sidebar-content {
+        width: 200px;
+    }*/
+    .viewFramework-sidebar-mini .IndexLeftMargin {
+        /* left: 100px!important; */
+    }
+    .viewFramework-sidebar-full .IndexLeftMargin {
+        /* left: 160px!important; */
+    }
+}
+/*@media screen and (max-width: 1601px) {
+    .viewFramework-sidebar-full .viewFramework-sidebar, .viewFramework-sidebar.sidebar-full {
+        display: block;
+        width: 160px;
+    }
+    .viewFramework-sidebar .sidebar-fold {
+        width: 160px;
+    }
+    .viewFramework-sidebar .sidebar-content {
+        width: 180px;
+    }
+    .viewFramework-sidebar-mini .IndexLeftMargin {
+        left: 160px!important;
+    }
+    .viewFramework-sidebar-full .IndexLeftMargin {
+        left: 160px!important;
+    }
+}*/
+/*@media screen and (max-width: 1367px) {
+    .viewFramework-sidebar-full .viewFramework-sidebar, .viewFramework-sidebar.sidebar-full {
+        display: block;
+        width: 150px;
+    }
+    .viewFramework-sidebar .sidebar-fold {
+        width: 150px;
+    }
+    .viewFramework-sidebar .sidebar-content {
+        width: 170px;
+    }
+    .viewFramework-sidebar-mini .IndexLeftMargin {
+        left: 150px!important;
+    }
+    .viewFramework-sidebar-full .IndexLeftMargin {
+        left: 150px!important;
+    }
+}*/
+@media screen and (max-width: 1281px) {
+    .viewFramework-sidebar {
+        /*position: fixed;*/
+       /* position: inherit;
+        top: 0*/
+    }
+/*    .viewFramework-main {
+        width: 1120px;
+    }*/
+    .IndexLeftMarginZero {
+        width: 100%;
+    }
+    .IndexLeftMargin {
+        width: 1180px;
+    }
+}
+
+
+
