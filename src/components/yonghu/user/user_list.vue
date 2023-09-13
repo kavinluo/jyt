@@ -59,8 +59,11 @@
             ref="cascaderHandle"
             :props="props"
             @change="handleChange"
+            collapse-tags
+            :show-all-levels="false"
             @expand-change="expandChange">
           </el-cascader>
+          <!-- <Cascader :data="data4" :load-data="loadData"></Cascader> -->
         </el-form-item>
           <el-form-item label="会员筛选">
             <el-select
@@ -148,6 +151,11 @@
             <span v-if="scope.row.vipEndTime !== null">{{ scope.row.vipEndTime | filterTime }}</span>
           </template>
         </el-table-column>
+        <el-table-column
+          prop="tenantName"
+          label="课程权限"
+          align="center"
+        />
         <el-table-column
           prop="tenantName"
           label="机构名称"
@@ -348,7 +356,6 @@ import userOperate from '../yonghuguanli/userOperate.vue'
 import settingPer from './settingPer.vue'
 
 let Util = null
-let id = 0
 export default {
   components: {
     memBerShip,
@@ -416,6 +423,8 @@ export default {
       },
       treeIdList:[],
       props: {
+        checkStrictly: true,
+        multiple: true,
         lazy: true,
         value:'id',
         label: 'name',
@@ -440,16 +449,6 @@ export default {
     })
   },
   methods: {
-    lazyLoad (node, resolve) {
-      this.getSelectList(node, resolve)
-    },
-    expandChange(val) {
-      console.log('val', val)
-      // this.treeIdList = val
-    },
-    handleChange(selectArea) {
-      console.log('selectArea', selectArea)
-    },
     // 初始化请求列表数据
     init() {
       Util = this.$util
@@ -464,8 +463,20 @@ export default {
         }
       }
       this.setTableData()
-      // this.getSelectList()
     },
+    lazyLoad (node, resolve) {
+      this.getSelectList(node, resolve)
+    },
+    expandChange(val) {
+      console.log('val', val)
+      // this.treeIdList = val
+    },
+    handleChange(selectArea) {
+      console.log('selectArea', selectArea)
+      this.treeIdList = [...new Set([].concat(...selectArea))]
+      console.log('this.treeIdList', this.treeIdList)
+    },
+
     getSelectList(node, resolve) {
       let params = null
       console.log('node', node)
@@ -515,6 +526,7 @@ export default {
         this.queryQptions.params,
         this.formInline
       )
+      this.listMessTitle.ajaxParams.params.treeIdList = this.treeIdList.join(',')
       this.ajax(this.listMessTitle)
     },
     // 删除节点
