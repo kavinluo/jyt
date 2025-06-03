@@ -32,3 +32,5 @@ new Vue({
   store,
   render: h => h(App)
 }).$mount('#app')
+
+// 测试内容测试内容
